@@ -1,94 +1,140 @@
-import { useCallback, useEffect, useState, useRef } from 'react'
-
-
+import { useCallback, useState, useRef, useEffect } from "react";
 
 function App() {
+  const [length, setLength] = useState(8);
+  const [numsAllowed, setNumsAllowed] = useState(false);
+  const [symbolsAllowed, setSymbolsAllowed] = useState(false);
+  const [password, setPassword] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state
 
-  const [length, setLength] = useState(6)
-  const [password,setPassword] = useState("")
-  const [includeNums,setIncludeNums] = useState(false)
-  const [includeSymbols,setIncludeSymbols] = useState(false)
+  const passwordGenerator = useCallback(() => {
+    let pass = "";
+    let str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    if (numsAllowed) str += "0123456789";
+    if (symbolsAllowed) str += "!@#$%^&*()_+-=?/~`[]{}\\|<>,.";
 
-  //useRef
-  const passwordRef = useRef(null)
-
-  const PasswordGenerator = useCallback(()=>{
-    let pass=''
-    let str ='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    if(includeNums) str +='0123456789'
-    if(includeSymbols) str += '!@#$%^&*()_+-=[]{}'
-
-    for(let i = 0; i < length; i++){
-      let char = Math.floor(Math.random()*str.length + 1);
-      pass += str.charAt(char)
+    for (let i = 0; i < length; i++) {
+      let char = Math.floor(Math.random() * str.length);
+      pass += str.charAt(char);
     }
+    setPassword(pass);
+  }, [numsAllowed, symbolsAllowed, length]);
 
-    setPassword(pass)
-  },[length, includeNums, includeSymbols, setPassword])
-  
-  const copyPasswordToClipboard = useCallback(() => {
+  const passwordRef = useRef(null);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(password);
     passwordRef.current?.select();
     passwordRef.current?.setSelectionRange(0, 999);
-    window.navigator.clipboard.writeText(password)
-  }, [password])
 
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-   useEffect(()=>{
-    PasswordGenerator()
-    },[length, includeNums, includeSymbols, PasswordGenerator])
+  useEffect(() => {
+    passwordGenerator();
+  }, [length, numsAllowed, symbolsAllowed, passwordGenerator]);
 
   return (
-    <>
-    
-      <h1 className=" mt-15 mb-2 mx-5 p-5 text-5xl text-center text-orange-300 " >Password Generator</h1>
-    
-      <div className='w-full max-w-md mx-auto p-4 my-4 bg-gray-700 text-orange-400 shadow-md rounded-lg'>
-       
-        <div className='my-1.5 p-2'>
-          <input type="text" 
-           placeholder='password'
-           value={password} 
-           readOnly
-           className= "bg-gray-500 py-1 px-3 rounded-lg"
-           ref={passwordRef}
-           ></input>
-          <button onClick={copyPasswordToClipboard} className='p-0.5 bg-blue-600 text-white rounded-lg '>Copy</button>
+    <div
+      className={`flex flex-col items-center justify-center min-h-screen ${
+        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-200 text-blue-900"
+      }`}
+    >
+      <div
+        className={`${
+          isDarkMode ? "bg-gray-800" : "bg-gray-100"
+        } p-6 rounded-2xl shadow-lg max-w-md w-full text-center`}
+      >
+        <h1
+          className={`text-3xl font-bold ${
+            isDarkMode ? "text-pink-500" : "text-blue-600"
+          }`}
+        >
+          Password Generator
+        </h1>
+
+        <div
+          className={`${
+            isDarkMode ? "bg-gray-700" : "bg-gray-300"
+          } flex items-center mt-4 p-2 rounded-lg`}
+        >
+          <input
+            type="text"
+            className="w-full bg-transparent text-lg px-2 outline-none"
+            placeholder="Your Password"
+            value={password}
+            ref={passwordRef}
+            readOnly
+          />
+          <button
+            className={`ml-2 px-4 py-2 ${
+              isDarkMode
+                ? "bg-pink-500 hover:bg-pink-600 active:bg-pink-700"
+                : "bg-blue-500 hover:bg-blue-600 active:bg-blue-700"
+            } text-white rounded-lg transition duration-200`}
+            onClick={copyToClipboard}
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
         </div>
 
-        <div>
-          <input type='range' 
-            min='6'
-            max='20'
-            value = {length}
-            onChange={(e) => {parseInt(setLength(e.target.value))}}
-          ></input>
-          <label>length:{length}</label>
+        <div className="mt-4 flex flex-col space-y-3">
+          <div className="flex justify-between items-center">
+            <label className="text-lg">Length: {length}</label>
+            <input
+              type="range"
+              className={`w-2/3 ${isDarkMode ? "accent-pink-500" : "accent-blue-500"}`}
+              min="4"
+              max="20"
+              step="1"
+              value={length}
+              onChange={(e) => setLength(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label className="text-lg">Include Numbers</label>
+            <input
+              type="checkbox"
+              className={`w-5 h-5 ${isDarkMode ? "accent-pink-500" : "accent-blue-500"}`}
+              checked={numsAllowed}
+              onChange={() => setNumsAllowed((prev) => !prev)}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <label className="text-lg">Include Symbols</label>
+            <input
+              type="checkbox"
+              className={`w-5 h-5 ${isDarkMode ? "accent-pink-500" : "accent-blue-500"}`}
+              checked={symbolsAllowed}
+              onChange={() => setSymbolsAllowed((prev) => !prev)}
+            />
+          </div>
         </div>
 
-        <div>
-          <input type="checkbox" 
-           id ="includeNums"
-           defaultChecked={includeNums}
-           onChange={()=>{
-            setIncludeNums((prev) => !prev)
-           }}
-          ></input>
-          <label htmlFor='includeNums'>Numbers</label>
-        </div>
+        <button
+          className={`w-full mt-5 px-4 py-2 ${
+            isDarkMode
+              ? "bg-pink-500 hover:bg-pink-600 active:bg-pink-700"
+              : "bg-blue-500 hover:bg-blue-600 active:bg-blue-700"
+          } text-white rounded-lg transition duration-200`}
+          onClick={passwordGenerator}
+        >
+          Generate Password
+        </button>
 
-        <div>
-          <input type="checkbox"
-            id="includeSymbols"
-            defaultChecked={includeSymbols}
-            onChange={()=>
-              {setIncludeSymbols((prev)=>!prev)} } 
-          ></input>
-          <label htmlFor='includeSymbols'>Symbols</label>
-        </div>
-
+        <button
+          className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg"
+          onClick={() => setIsDarkMode((prev) => !prev)} // Toggle mode
+        >
+          Toggle {isDarkMode ? "Light" : "Dark"} Mode
+        </button>
       </div>
-    </>
-  ) 
+    </div>
+  );
 }
 
-export default App
+export default App;
